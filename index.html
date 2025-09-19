@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Netflix — Netflix-style UI (Demo)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#6e6d6d; --card:#2f2e2e; --muted:#9ca3af; --accent:#af282e;
+      --radius:12px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial;background:linear-gradient(180deg,#050505 0%, #0f0f12 100%);color:#fff}
+
+    /* Header */
+    .nav{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:18px 36px;background:linear-gradient(180deg,rgba(0,0,0,0.6),transparent);z-index:50}
+    .brand{display:flex;align-items:center;gap:16px}
+    .logo{font-weight:800;letter-spacing:1px;color:var(--accent)}
+    .nav-links{display:flex;gap:18px;align-items:center}
+    .nav a{color:#ddd;text-decoration:none;font-weight:600;font-size:14px}
+
+    /* Hero */
+    .hero{height:62vh;padding-top:80px;display:flex;align-items:flex-end;padding-left:48px;padding-right:48px;background-image:linear-gradient(180deg, rgba(0,0,0,0.25), rgba(0,0,0,0.85));background-size:cover;background-position:center}
+    .hero .meta{max-width:720px}
+    .title{font-size:48px;font-weight:800;margin:0 0 12px}
+    .desc{color:var(--muted);margin:0 0 18px}
+    .cta{display:flex;gap:12px}
+    .btn{background:#fff;color:#000;padding:10px 18px;border-radius:6px;font-weight:700;cursor:pointer;border:0}
+    .btn.ghost{background:rgba(255,255,255,0.12);color:#fff}
+
+    /* Content Rows */
+    .container{padding:28px 40px}
+    .row{margin:16px 0}
+    .row h3{margin:0 0 10px;font-size:18px}
+    .scroller{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px}
+    .card{min-width:180px;height:260px;border-radius:10px;background:var(--card);flex:0 0 auto;position:relative;overflow:hidden;cursor:pointer}
+    .card img{width:100%;height:100%;object-fit:cover;display:block}
+    .card .overlay{position:absolute;inset:0;background:linear-gradient(180deg,transparent,rgba(0,0,0,0.6));opacity:0;transition:opacity .22s}
+    .card:hover .overlay{opacity:1}
+
+    /* Modal */
+    .modal{position:fixed;inset:0;display:none;align-items:flex-end;justify-content:center;padding:24px;z-index:60}
+    .modal.open{display:flex;background:linear-gradient(180deg,rgba(0,0,0,0.6),rgba(0,0,0,0.9))}
+    .modal-card{width:min(980px,96%);background:linear-gradient(180deg,#0c0c0c,#070707);border-radius:14px;padding:20px;display:flex;gap:18px}
+    .modal-thumb{width:40%;min-width:320px;height:210px;border-radius:8px;overflow:hidden}
+    .modal-body{flex:1}
+    .muted{color:var(--muted);font-size:14px}
+
+    /* Search & small screens */
+    .search{position:relative}
+    .search input{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.03);padding:8px 12px;border-radius:8px;color:#fff}
+
+    @media (max-width:900px){
+      .title{font-size:28px}
+      .hero{height:48vh;padding-left:20px;padding-right:20px}
+      .nav{padding:12px 16px}
+      .container{padding:16px}
+      .card{min-width:140px;height:200px}
+      .modal-card{flex-direction:column}
+      .modal-thumb{width:100%;min-width:unset;height:220px}
+    }
+
+    /* scrollbar small style */
+    .scroller::-webkit-scrollbar{height:10px}
+    .scroller::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.06);border-radius:10px}
+
+  </style>
+</head>
+<body>
+  <header class="nav">
+    <div class="brand">
+      <div class="logo">Netflix</div>
+      <nav class="nav-links">
+        <a href="https://www.amazonprime.com">Home</a>
+        <a target="_blank" href="https://www.youtube.com">TV Shows</a>
+        <a href="https://www.google.com">Movies</a>
+        <a href="https://www.steam.com">My List</a>
+      </nav>
+    </div>
+
+    <div style="display:flex;gap:12px;align-items:center">
+      <div class="search"><input id="search" placeholder="Search" /></div>
+      <img src="https://images.unsplash.com/photo-1545996124-1b91b1fec5a7?q=80&w=48&auto=format&fit=crop&ixlib=rb-4.0.3&s=placeholder" alt="avatar" style="width:36px;height:36px;border-radius:6px;object-fit:cover">
+    </div>
+  </header>
+
+  <section class="hero" id="hero" style="background-image:url('https://images.unsplash.com/photo-1517607613513-d466f06f39d4?q=80&w=1600&auto=format&fit=crop&ixlib=rb-4.0.3&s=placeholder');">
+    <div class="meta">
+      <h1 class="title">Marvel Doomsday</h1>
+      <p class="desc">A Best romantic movie of Marvel</p>
+      <div class="cta">
+        <button class="btn">Play</button>
+        <button class="btn ghost">More Info</button>
+      </div>
+    </div>
+  </section>
+
+  <main class="container">
+    <section class="row">
+      <h3>Trending Now</h3>
+      <div class="scroller" id="row-trending"></div>
+    </section>
+
+    <section class="row">
+      <h3>New Releases</h3>
+      <div class="scroller" id="row-new"></div>
+    </section>
+
+    <section class="row">
+      <h3>Recommended For You</h3>
+      <div class="scroller" id="row-rec"></div>
+    </section>
+  </main>
+
+  <!-- Modal -->
+  <div class="modal" id="modal">
+    <div class="modal-card">
+      <div class="modal-thumb"><img id="modal-img" src="" style="width:100%;height:100%;object-fit:cover;border-radius:8px"></div>
+      <div class="modal-body">
+        <h2 id="modal-title">Title</h2>
+        <p class="muted" id="modal-meta">2024 • 1h 42m • Drama</p>
+        <p id="modal-desc" style="margin-top:10px;color:#ddd">Description</p>
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button class="btn">Play</button>
+          <button class="btn ghost" id="close-modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Simple demo data (replace with your own images & metadata)
+    const sample = [
+      {title:'The Silent Horizon',img:'https://images.unsplash.com/photo-1505685296765-3a2736de412f?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.0.3&s=placeholder',meta:'2025 • 1h 58m'},
+      {title:'City of Echoes',img:'https://images.unsplash.com/photo-1524985069026-dd778a71c7b4?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.0.3&s=placeholder',meta:'2024 • 2h 04m'},
+      {title:'Midnight Run',img:'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.0.3&s=placeholder',meta:'2023 • 1h 43m'},
+      {title:'Afterglow',img:'https://images.unsplash.com/photo-1524985069026-dd778a71c7b4?q=80&w=801&auto=format&fit=crop&ixlib=rb-4.0.3&s=placeholder',meta:'2022 • 1h 50m'},
+      {title:'Rogue Signals',img:'https://images.unsplash.com/photo-1496307042754-b4aa456c4a2d?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.0.3&s=placeholder',meta:'2025 • 2h 10m'},
+      {title:'The Last Broadcast',img:'https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.0.3&s=placeholder',meta:'2021 • 1h 32m'}
+    ];
+
+    function buildRow(elId, items){
+      const row = document.getElementById(elId);
+      items.forEach(it=>{
+        const c = document.createElement('div'); c.className='card';
+        const im = document.createElement('img'); im.src = it.img; im.alt = it.title;
+        const ov = document.createElement('div'); ov.className='overlay';
+        c.appendChild(im); c.appendChild(ov);
+        c.addEventListener('click', ()=> openModal(it));
+        row.appendChild(c);
+      });
+    }
+
+    function openModal(it){
+      document.getElementById('modal').classList.add('open');
+      document.getElementById('modal-img').src = it.img;
+      document.getElementById('modal-title').textContent = it.title;
+      document.getElementById('modal-meta').textContent = it.meta;
+      document.getElementById('modal-desc').textContent = (it.desc || 'No description available for this demo item.');
+    }
+
+    document.getElementById('close-modal').addEventListener('click', ()=>document.getElementById('modal').classList.remove('open'));
+    document.getElementById('modal').addEventListener('click', (e)=>{ if(e.target.id === 'modal') document.getElementById('modal').classList.remove('open') });
+
+    // Responsive prefill
+    buildRow('row-trending', sample);
+    buildRow('row-new', sample.slice().reverse());
+    buildRow('row-rec', sample.concat(sample));
+
+    // Search quick filter
+    document.getElementById('search').addEventListener('input', (e)=>{
+      const q = e.target.value.toLowerCase();
+      document.querySelectorAll('.card').forEach(card=>{
+        const alt = card.querySelector('img').alt.toLowerCase();
+        card.style.display = alt.includes(q) ? 'block' : 'none';
+      });
+    });
+
+  </script>
+</body>
+</html>
